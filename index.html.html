@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marquis Court — Daily Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Lato:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a1a; font-family: 'Lato', sans-serif; }
+  #screen { width: 100vw; height: 100vh; position: relative; overflow: hidden; background: #f5f2ee; display: flex; flex-direction: column; }
+
+  /* HEADER */
+  .slide-header { background: #4a6b72; padding: clamp(8px,1.8vh,20px) clamp(14px,2.2vw,28px); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; min-height: clamp(55px,10vh,95px); }
+  .home-name { font-family: 'Cormorant Garamond', serif; font-size: clamp(22px,4.2vw,58px); font-weight: 700; color: #c8b48a; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1; }
+  .home-sub { font-family: 'Lato', sans-serif; font-size: clamp(8px,1.1vw,15px); font-weight: 700; color: #a8c4c8; letter-spacing: 0.18em; text-transform: uppercase; margin-top: 3px; }
+  .header-right { text-align: right; }
+  .header-day { font-family: 'Cormorant Garamond', serif; font-size: clamp(16px,3.2vw,44px); color: #c8b48a; font-weight: 700; line-height: 1; }
+  .header-date { font-family: 'Lato', sans-serif; font-size: clamp(9px,1.2vw,17px); font-weight: 700; color: #e8d8b8; margin-top: 3px; }
+
+  /* TITLE BAR */
+  .slide-title-bar { background: #f0ebe3; border-bottom: 3px solid #c8b48a; padding: clamp(5px,0.9vh,11px) clamp(14px,2.2vw,28px); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .slide-title-bar .ti { font-size: clamp(15px,2.1vw,30px); color: #4a6b72; }
+  .slide-title-text { font-family: 'Cormorant Garamond', serif; font-size: clamp(15px,2.1vw,30px); font-weight: 700; color: #4a6b72; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .slide-body { flex: 1; padding: clamp(6px,0.9vh,12px) clamp(8px,1.3vw,16px); display: flex; flex-direction: column; min-height: 0; }
+
+  .slide { display: none; flex-direction: column; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: #f5f2ee; }
+  .slide.active { display: flex; }
+
+  /* ═══════════ STAFFING ═══════════ */
+  .shift-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: clamp(6px,1.1vw,14px); flex: 1; min-height: 0; }
+
+  .shift-card { background: #fff; border-radius: 8px; border: 2px solid #c8b48a; padding: clamp(6px,0.9vw,13px) clamp(8px,1.1vw,16px); display: flex; flex-direction: column; overflow: hidden; }
+  .shift-label { font-family: 'Lato', sans-serif; font-size: clamp(8px,0.9vw,13px); text-transform: uppercase; letter-spacing: 0.12em; color: #4a6b72; font-weight: 900; margin-bottom: clamp(3px,0.5vh,7px); padding-bottom: clamp(3px,0.5vh,6px); border-bottom: 2px solid #e0d8cc; display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+  .shift-label .ti { font-size: clamp(9px,1vw,14px); }
+  .staff-list { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+  .staff-name { font-family: 'Lato', sans-serif; font-size: clamp(11px,1.6vw,24px); font-weight: 700; padding: clamp(2px,0.4vh,5px) 0; color: #1a1a1a; border-bottom: 1px solid #f0ebe3; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .staff-name:last-child { border-bottom: none; }
+  .staff-role { font-family: 'Lato', sans-serif; font-size: clamp(7px,0.78vw,11px); color: #4a6b72; background: #e8f0f2; padding: 1px clamp(4px,0.5vw,8px); border-radius: 20px; font-weight: 900; white-space: nowrap; flex-shrink: 0; }
+  .shift-count { font-family: 'Lato', sans-serif; font-size: clamp(7px,0.85vw,12px); font-weight: 700; color: #4a6b72; margin-top: clamp(3px,0.5vh,7px); text-align: right; flex-shrink: 0; }
+
+  /* Support column */
+  .support-col { display: flex; flex-direction: column; gap: clamp(4px,0.7vh,9px); }
+  .support-card { background: #fff; border-radius: 8px; border: 2px solid #c8b48a; padding: clamp(4px,0.7vw,10px) clamp(6px,0.9vw,13px); display: flex; flex-direction: column; overflow: hidden; }
+  .support-card.kitchen  { flex: 2; }
+  .support-card.domestic { flex: 3; }
+  .support-card.mgmt     { flex: 3; }
+  .support-card.maint    { flex: 1; }
+  .support-label { font-family: 'Lato', sans-serif; font-size: clamp(7px,0.85vw,12px); text-transform: uppercase; letter-spacing: 0.11em; font-weight: 900; color: #4a6b72; margin-bottom: clamp(2px,0.3vh,5px); padding-bottom: clamp(2px,0.3vh,5px); border-bottom: 1.5px solid #e0d8cc; display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .support-label .ti { font-size: clamp(8px,0.9vw,12px); }
+  .support-list { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+  .support-name { font-family: 'Lato', sans-serif; font-size: clamp(10px,1.4vw,20px); font-weight: 700; padding: clamp(1px,0.25vh,4px) 0; color: #1a1a1a; border-bottom: 1px solid #f0ebe3; display: flex; align-items: center; justify-content: space-between; }
+  .support-name:last-child { border-bottom: none; }
+  .support-role { font-family: 'Lato', sans-serif; font-size: clamp(6px,0.68vw,10px); color: #4a6b72; background: #e8f0f2; padding: 1px clamp(3px,0.4vw,6px); border-radius: 20px; font-weight: 900; white-space: nowrap; }
+
+  /* ═══════════ MENU ═══════════ */
+  .menu-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: clamp(6px,1.1vw,14px); flex: 1; min-height: 0; }
+  .menu-col { background: #fff; border-radius: 8px; border: 2px solid #c8b48a; overflow: hidden; display: flex; flex-direction: column; }
+  .menu-col-header { background: #4a6b72; padding: clamp(7px,1.1vh,15px) clamp(10px,1.4vw,20px); display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; }
+  .menu-col-header .ti { font-size: clamp(14px,1.8vw,26px); color: #c8b48a; }
+  .menu-col-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(17px,2.4vw,36px); font-weight: 700; color: #c8b48a; letter-spacing: 0.06em; text-transform: uppercase; }
+  .menu-col-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .menu-main-section { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: clamp(8px,1.3vh,18px) clamp(10px,1.4vw,20px); }
+  .menu-main-section.has-dessert { border-bottom: 2px solid #e8e0d4; }
+  .menu-dish { font-family: 'Cormorant Garamond', serif; font-size: clamp(17px,2.6vw,40px); font-weight: 700; color: #1a1a1a; line-height: 1.1; }
+  .menu-desc { font-family: 'Lato', sans-serif; font-size: clamp(10px,1.2vw,18px); font-weight: 700; color: #5a5040; margin-top: 3px; line-height: 1.3; }
+  .menu-or { font-family: 'Lato', sans-serif; font-size: clamp(11px,1.4vw,20px); font-weight: 700; color: #7a6a50; font-style: italic; margin: clamp(5px,0.8vh,12px) 0; }
+  .menu-dessert-section { flex: 0 0 30%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: clamp(6px,0.9vh,12px) clamp(10px,1.4vw,20px); background: #faf7f3; }
+  .menu-dessert-heading { font-family: 'Lato', sans-serif; font-size: clamp(8px,0.95vw,14px); font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #4a6b72; margin-bottom: clamp(3px,0.5vh,7px); }
+
+  /* ═══════════ ACTIVITIES ═══════════ */
+  .act-cols { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(6px,1.1vw,14px); flex: 1; min-height: 0; }
+  .act-col { background: #fff; border-radius: 8px; border: 2px solid #c8b48a; overflow: hidden; display: flex; flex-direction: column; }
+  .act-col-header { background: #4a6b72; padding: clamp(7px,1.1vh,15px) clamp(10px,1.4vw,20px); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .act-col-header .ti { font-size: clamp(14px,1.8vw,26px); color: #c8b48a; }
+  .act-col-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(17px,2.4vw,36px); font-weight: 700; color: #c8b48a; letter-spacing: 0.06em; text-transform: uppercase; }
+  .act-col-body { padding: clamp(7px,1.1vh,14px) clamp(8px,1.2vw,16px); flex: 1; display: flex; flex-direction: column; gap: clamp(5px,0.8vh,11px); overflow: hidden; justify-content: center; }
+  .act-row { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: clamp(5px,0.9vh,13px); padding: clamp(10px,1.6vh,22px) clamp(12px,1.6vw,22px); border-radius: 10px; background: #f8f5f0; border: 2px solid #c8b48a; flex: 1; }
+  .act-row.special { background: #eef4f5; border-color: #4a6b72; }
+  .act-time { font-family: 'Lato', sans-serif; font-size: clamp(20px,3.4vw,52px); font-weight: 900; color: #4a6b72; line-height: 1; }
+  .act-name { font-family: 'Cormorant Garamond', serif; font-size: clamp(22px,3.8vw,58px); font-weight: 700; color: #1a1a1a; line-height: 1.1; }
+  .act-loc { font-family: 'Lato', sans-serif; font-size: clamp(13px,1.7vw,26px); font-weight: 700; color: #5a7a7c; margin-top: 4px; }
+  .act-special-tag { font-family: 'Lato', sans-serif; font-size: clamp(10px,1.1vw,16px); font-weight: 900; background: #4a6b72; color: #c8b48a; padding: clamp(3px,0.5vh,7px) clamp(10px,1.2vw,18px); border-radius: 8px; margin-top: 6px; display: inline-block; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* LOADING */
+  #loading { position: fixed; inset: 0; background: #4a6b72; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.7s; }
+  #loading.hidden { opacity: 0; pointer-events: none; }
+  #loading .logo { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px,6vw,80px); font-weight: 700; color: #c8b48a; letter-spacing: 0.1em; text-transform: uppercase; }
+  #loading .sub { font-family: 'Lato', sans-serif; font-size: clamp(12px,1.8vw,24px); font-weight: 700; color: #a8c4c8; letter-spacing: 0.2em; text-transform: uppercase; margin-top: 8px; }
+  #loading .spinner { width: 44px; height: 44px; border: 3px solid rgba(200,180,138,0.3); border-top-color: #c8b48a; border-radius: 50%; animation: spin 0.9s linear infinite; margin-top: 36px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #progress-bar { position: fixed; bottom: 0; left: 0; height: 5px; background: #c8b48a; z-index: 50; }
+  .no-data { font-family: 'Lato', sans-serif; font-size: clamp(14px,1.8vw,26px); font-weight: 700; color: #8a9a9c; font-style: italic; padding: 16px 0; }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="logo">Marquis Court</div>
+  <div class="sub">Residential Home</div>
+  <div class="spinner"></div>
+</div>
+<div id="progress-bar"></div>
+
+<div id="screen">
+
+  <!-- ══ STAFFING ══ -->
+  <div class="slide active" id="slide-staff">
+    <div class="slide-header">
+      <div><div class="home-name">Marquis Court</div><div class="home-sub">Residential Home</div></div>
+      <div class="header-right"><div class="header-day" id="staff-day"></div><div class="header-date" id="staff-date"></div></div>
+    </div>
+    <div class="slide-title-bar"><i class="ti ti-users"></i><span class="slide-title-text">Staff on duty today</span></div>
+    <div class="slide-body">
+      <div class="shift-grid">
+        <div class="shift-card">
+          <div class="shift-label"><i class="ti ti-sun"></i>Day shift &nbsp;·&nbsp; 8am – 8pm</div>
+          <div class="staff-list" id="day-staff"></div>
+          <div class="shift-count" id="day-count"></div>
+        </div>
+        <div class="shift-card">
+          <div class="shift-label"><i class="ti ti-moon"></i>Night shift &nbsp;·&nbsp; 8pm – 8am</div>
+          <div class="staff-list" id="night-staff"></div>
+          <div class="shift-count" id="night-count"></div>
+        </div>
+        <div class="support-col">
+          <div class="support-card kitchen">
+            <div class="support-label"><i class="ti ti-tools-kitchen-2"></i>Kitchen</div>
+            <div class="support-list" id="kitchen-staff"></div>
+          </div>
+          <div class="support-card domestic">
+            <div class="support-label"><i class="ti ti-home"></i>Domestics</div>
+            <div class="support-list" id="domestic-staff"></div>
+          </div>
+          <div class="support-card mgmt">
+            <div class="support-label"><i class="ti ti-briefcase"></i>Management</div>
+            <div class="support-list" id="mgmt-staff"></div>
+          </div>
+          <div class="support-card maint">
+            <div class="support-label"><i class="ti ti-tool"></i>Maintenance</div>
+            <div class="support-list" id="maint-staff"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MENU ══ -->
+  <div class="slide" id="slide-menu">
+    <div class="slide-header">
+      <div><div class="home-name">Marquis Court</div><div class="home-sub">Residential Home</div></div>
+      <div class="header-right"><div class="header-day" id="menu-day"></div><div class="header-date" id="menu-date"></div></div>
+    </div>
+    <div class="slide-title-bar"><i class="ti ti-tools-kitchen-2"></i><span class="slide-title-text">Today's menu</span></div>
+    <div class="slide-body">
+      <div class="menu-cols">
+        <!-- BREAKFAST -->
+        <div class="menu-col">
+          <div class="menu-col-header"><i class="ti ti-coffee"></i><span class="menu-col-title">Breakfast</span></div>
+          <div class="menu-col-body">
+            <div class="menu-main-section">
+              <div class="menu-dish" id="bfast-main1"></div>
+              <div class="menu-desc" id="bfast-main1-desc"></div>
+              <div class="menu-or">— or —</div>
+              <div class="menu-dish" id="bfast-main2"></div>
+              <div class="menu-desc" id="bfast-main2-desc"></div>
+            </div>
+          </div>
+        </div>
+        <!-- LUNCH -->
+        <div class="menu-col">
+          <div class="menu-col-header"><i class="ti ti-sun"></i><span class="menu-col-title">Lunch</span></div>
+          <div class="menu-col-body">
+            <div class="menu-main-section has-dessert">
+              <div class="menu-dish" id="lunch-main1"></div>
+              <div class="menu-desc" id="lunch-main1-desc"></div>
+              <div class="menu-or">— or —</div>
+              <div class="menu-dish" id="lunch-main2"></div>
+              <div class="menu-desc" id="lunch-main2-desc"></div>
+            </div>
+            <div class="menu-dessert-section">
+              <div class="menu-dessert-heading">Dessert</div>
+              <div class="menu-dish" id="lunch-dessert"></div>
+              <div class="menu-desc" id="lunch-dessert-desc"></div>
+            </div>
+          </div>
+        </div>
+        <!-- DINNER -->
+        <div class="menu-col">
+          <div class="menu-col-header"><i class="ti ti-moon"></i><span class="menu-col-title">Dinner</span></div>
+          <div class="menu-col-body">
+            <div class="menu-main-section has-dessert">
+              <div class="menu-dish" id="dinner-main1"></div>
+              <div class="menu-desc" id="dinner-main1-desc"></div>
+              <div class="menu-or">— or —</div>
+              <div class="menu-dish" id="dinner-main2"></div>
+              <div class="menu-desc" id="dinner-main2-desc"></div>
+            </div>
+            <div class="menu-dessert-section">
+              <div class="menu-dessert-heading">Dessert</div>
+              <div class="menu-dish" id="dinner-dessert"></div>
+              <div class="menu-desc" id="dinner-dessert-desc"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ACTIVITIES ══ -->
+  <div class="slide" id="slide-activities">
+    <div class="slide-header">
+      <div><div class="home-name">Marquis Court</div><div class="home-sub">Residential Home</div></div>
+      <div class="header-right"><div class="header-day" id="act-day"></div><div class="header-date" id="act-date"></div></div>
+    </div>
+    <div class="slide-title-bar"><i class="ti ti-calendar-event"></i><span class="slide-title-text">Today's activities</span></div>
+    <div class="slide-body">
+      <div class="act-cols">
+        <div class="act-col">
+          <div class="act-col-header"><i class="ti ti-sun"></i><span class="act-col-title">Morning</span></div>
+          <div class="act-col-body" id="morning-acts"></div>
+        </div>
+        <div class="act-col">
+          <div class="act-col-header"><i class="ti ti-cloud"></i><span class="act-col-title">Afternoon</span></div>
+          <div class="act-col-body" id="afternoon-acts"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// COLUMN MAP (0-indexed):
+// A=0: Date
+// Day staff (12): names 1,3,5,7,9,11,13,15,17,19,21,23  roles 2,4,6,8,10,12,14,16,18,20,22,24
+// Night staff (5): names 25,27,29,31,33  roles 26,28,30,32,34
+// Kitchen (2): names 35,37  roles 36,38
+// Domestics (3): names 39,41,43  roles 40,42,44
+// Management (3): names 45,47,49  roles 46,48,50
+// Maintenance (1): name 51  role 52
+// Breakfast: main1=53, desc=54, main2=55, desc=56
+// Lunch: main1=57, desc=58, main2=59, desc=60, dessert=61, desc=62
+// Dinner: main1=63, desc=64, main2=65, desc=66, dessert=67, desc=68
+// Morning acts: 69-80 (3 acts x 4)
+// Afternoon acts: 81-92 (3 acts x 4)
+// ══════════════════════════════════════════
+
+const SHEET_ID        = '1GFwPs0GgU8jzBvuTkvjx04ppo17fCeQ8Bcks-w8rwbs';
+const SHEET_NAME      = 'Display';
+const SLIDE_DURATION  = 20000;
+const REFRESH_INTERVAL= 5 * 60 * 1000;
+
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+let slides = document.querySelectorAll('.slide');
+let current = 0, slideTimer = null;
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function setDates() {
+  const d = new Date();
+  const day  = DAYS[d.getDay()];
+  const date = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  ['staff','menu','act'].forEach(p => {
+    const de = document.getElementById(`${p}-day`);
+    const da = document.getElementById(`${p}-date`);
+    if (de) de.textContent = day;
+    if (da) da.textContent = date;
+  });
+}
+
+async function fetchRow() {
+  try {
+    const res  = await fetch(SHEET_URL + '&t=' + Date.now());
+    const text = await res.text();
+    const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+    const rows = json.table.rows;
+    const key  = todayKey();
+    for (const row of rows) {
+      const raw = row.c[0]?.v;
+      if (!raw) continue;
+      let rowKey = '';
+      if (typeof raw === 'string' && raw.startsWith('Date(')) {
+        const p = raw.replace('Date(','').replace(')','').split(',').map(Number);
+        const d = new Date(p[0], p[1], p[2]);
+        rowKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      }
+      if (rowKey === key) return row.c;
+    }
+    return null;
+  } catch(e) { console.error('Sheet fetch error:', e); return null; }
+}
+
+function buildStaffList(containerId, countId, nameIdxs, roleIdxs) {
+  const el  = document.getElementById(containerId);
+  const cnt = countId ? document.getElementById(countId) : null;
+  el.innerHTML = '';
+  let n = 0;
+  nameIdxs.forEach((ni, i) => {
+    const name = row_data[ni]?.v;
+    if (!name) return;
+    n++;
+    const role = row_data[roleIdxs[i]]?.v || '';
+    const div  = document.createElement('div');
+    div.className = containerId.includes('day') || containerId.includes('night') ? 'staff-name' : 'support-name';
+    div.innerHTML = `${name}<span class="${containerId.includes('day') || containerId.includes('night') ? 'staff-role' : 'support-role'}">${role}</span>`;
+    el.appendChild(div);
+  });
+  if (cnt) cnt.textContent = n ? `${n} staff on shift` : '';
+  if (!n) { const d=document.createElement('div'); d.className='no-data'; d.textContent='—'; el.appendChild(d); }
+}
+
+let row_data = [];
+
+function populateStaff(row) {
+  row_data = row;
+  buildStaffList('day-staff',     'day-count',   [1,3,5,7,9,11,13,15,17,19,21,23], [2,4,6,8,10,12,14,16,18,20,22,24]);
+  buildStaffList('night-staff',   'night-count', [25,27,29,31,33],                  [26,28,30,32,34]);
+  buildStaffList('kitchen-staff',  null,          [35,37],                           [36,38]);
+  buildStaffList('domestic-staff', null,          [39,41,43],                        [40,42,44]);
+  buildStaffList('mgmt-staff',     null,          [45,47,49],                        [46,48,50]);
+  buildStaffList('maint-staff',    null,          [51],                              [52]);
+}
+
+function populateMenu(row) {
+  const map = {
+    'bfast-main1':53,   'bfast-main1-desc':54,
+    'bfast-main2':55,   'bfast-main2-desc':56,
+    'lunch-main1':57,   'lunch-main1-desc':58,
+    'lunch-main2':59,   'lunch-main2-desc':60,
+    'lunch-dessert':61, 'lunch-dessert-desc':62,
+    'dinner-main1':63,  'dinner-main1-desc':64,
+    'dinner-main2':65,  'dinner-main2-desc':66,
+    'dinner-dessert':67,'dinner-dessert-desc':68,
+  };
+  Object.entries(map).forEach(([id, col]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = row[col]?.v || '';
+  });
+}
+
+function populateActivities(row) {
+  function build(containerId, startCol) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+    let hasAny = false;
+    for (let i = 0; i < 3; i++) {
+      const base    = startCol + (i * 4);
+      const time    = row[base]?.v;
+      const name    = row[base+1]?.v;
+      const loc     = row[base+2]?.v;
+      const special = row[base+3]?.v;
+      if (!name) continue;
+      hasAny = true;
+      const div = document.createElement('div');
+      div.className = 'act-row' + (special ? ' special' : '');
+      div.innerHTML = `
+        <div class="act-time">${time || ''}</div>
+        <div class="act-name">${name}</div>
+        ${loc     ? `<div class="act-loc"><i class="ti ti-map-pin" style="font-size:0.85em"></i> ${loc}</div>` : ''}
+        ${special ? `<div class="act-special-tag">${special}</div>` : ''}`;
+      el.appendChild(div);
+    }
+    if (!hasAny) { const d=document.createElement('div'); d.className='no-data'; d.textContent='No activities entered for today'; el.appendChild(d); }
+  }
+  build('morning-acts',   69);
+  build('afternoon-acts', 81);
+}
+
+function startRotation() {
+  clearInterval(slideTimer);
+  slideTimer = setInterval(nextSlide, SLIDE_DURATION);
+  animateProgress();
+}
+
+function nextSlide() {
+  slides[current].classList.remove('active');
+  current = (current + 1) % slides.length;
+  slides[current].classList.add('active');
+  animateProgress();
+}
+
+function animateProgress() {
+  const bar = document.getElementById('progress-bar');
+  bar.style.transition = 'none'; bar.style.width = '0%';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    bar.style.transition = `width ${SLIDE_DURATION}ms linear`;
+    bar.style.width = '100%';
+  }));
+}
+
+async function init() {
+  setDates();
+  const row = await fetchRow();
+  if (row) {
+    populateStaff(row);
+    populateMenu(row);
+    populateActivities(row);
+  } else {
+    document.getElementById('day-staff').innerHTML   = '<div class="no-data">No data entered for today</div>';
+    document.getElementById('night-staff').innerHTML = '<div class="no-data">No data entered for today</div>';
+    document.getElementById('lunch-main1').textContent = 'No menu entered for today';
+  }
+  setTimeout(() => { document.getElementById('loading').classList.add('hidden'); startRotation(); }, 900);
+}
+
+setInterval(async () => {
+  const row = await fetchRow();
+  if (row) { row_data = row; populateStaff(row); populateMenu(row); populateActivities(row); }
+  setDates();
+}, REFRESH_INTERVAL);
+setInterval(setDates, 60000);
+init();
+</script>
+</body>
+</html>
